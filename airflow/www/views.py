@@ -1163,6 +1163,8 @@ class Airflow(BaseView):
                 DR.dag_id == dag.dag_id,
                 DR.execution_date <= base_date,
                 DR.execution_date >= min_date)
+                .order_by(DR.execution_date.desc())
+                .limit(num_runs)
                 .all()
         )
         dag_runs = {
@@ -1170,6 +1172,7 @@ class Airflow(BaseView):
 
         dates = sorted(list(dag_runs.keys()))
         max_date = max(dates) if dates else None
+        min_date = dates[0] if dates else datetime(2000, 1, 1)
 
         tis = dag.get_task_instances(
             session, start_date=min_date, end_date=base_date)
