@@ -167,7 +167,7 @@ def configure_stats():
         from google.cloud import monitoring
 
         client = monitoring.Client(conf.get('scheduler', 'stackdriver_project'))
-        path_prefix = conf.get('scheduler', 'stackdriver_path_prefix')
+        path_prefix = conf.get('scheduler', 'stackdriver_prefix')
         return StackdriverLogger(client, path_prefix)
     else:
         return DummyStatsLogger
