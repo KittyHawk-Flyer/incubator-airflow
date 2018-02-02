@@ -116,6 +116,9 @@ except:
 
 configure_logging()
 Stats = configure_stats()
+Stats.gauge('configured', 1)
+log.info("Stats.gauge('configured', 1)")
+
 configure_vars()
 configure_orm()
 
