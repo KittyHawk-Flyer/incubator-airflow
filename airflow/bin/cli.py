@@ -815,7 +815,6 @@ def scheduler(args):
             stderr=stderr,
         )
         with ctx:
-            settings.Stats.gauge('scheduler_start', 1)
             job.run()
 
         stdout.close()

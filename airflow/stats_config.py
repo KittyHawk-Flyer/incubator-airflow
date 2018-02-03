@@ -26,14 +26,6 @@ from airflow.utils.module_loading import import_string
 log = logging.getLogger(__name__)
 
 
-def prepare_classpath():
-    config_path = os.path.join(conf.get('core', 'airflow_home'), 'config')
-    config_path = os.path.expanduser(config_path)
-
-    if config_path not in sys.path:
-        sys.path.append(config_path)
-
-
 class DummyStatsLogger(object):
     @classmethod
     def incr(cls, stat, count=1, rate=1):
