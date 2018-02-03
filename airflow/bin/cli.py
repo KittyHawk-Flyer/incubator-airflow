@@ -802,8 +802,6 @@ def scheduler(args):
         num_runs=args.num_runs,
         do_pickle=args.do_pickle)
 
-    settings.Stats.gauge('scheduler_start', 1)
-
     if args.daemon:
         pid, stdout, stderr, log_file = setup_locations("scheduler", args.pid, args.stdout, args.stderr, args.log_file)
         handle = setup_logging(log_file)
@@ -817,6 +815,7 @@ def scheduler(args):
             stderr=stderr,
         )
         with ctx:
+            settings.Stats.gauge('scheduler_start', 1)
             job.run()
 
         stdout.close()
