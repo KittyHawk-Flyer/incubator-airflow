@@ -55,7 +55,7 @@ class DummyStatsLogger(object):
 from google.cloud.monitoring import MetricKind, ValueType
 
 class StackdriverLogger(object):
-    def __init__(self, client, path_prefix, publish=True):
+    def __init__(self, client, path_prefix, start_publishing=True):
         self.new_descs = {}
         self.registered_descs = {}
         self.counters = {}
@@ -68,7 +68,7 @@ class StackdriverLogger(object):
         )
         self.publisher.daemon = True
 
-        if publish:
+        if start_publishing:
             self.publisher.start()
 
     @staticmethod
@@ -80,6 +80,8 @@ class StackdriverLogger(object):
 
     @staticmethod
     def _do_publish(client, path_prefix, new_descs, registered_descs, counters):
+        log.info("Started publishing stats to Stackdriver")
+
         # 1. registere descriptors
         descs = new_descs.items()
         for name, value_type in descs:
@@ -108,7 +110,7 @@ class StackdriverLogger(object):
                 ts.append(client.time_series(metric, resource, v, end_time=now))
 
         client.write_time_series(ts)
-
+        log.info("Finished publishing stats to Stackdriver")
 
     def _value_type(self, value):
         if type(value) == int:
@@ -142,6 +144,7 @@ class StackdriverLogger(object):
             self.counters[desc] += value
 
     def gauge(self, stat, value, rate=1, delta=False):
+        log.info("Stats.gauge(%s, %s)" % stat, value)
         desc = self._descriptor(stat, value)
         self._update_gauge(desc, value)
 
