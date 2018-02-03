@@ -136,7 +136,7 @@ class StackdriverLogger(object):
             self.counters[desc] += value
 
     def gauge(self, stat, value, rate=1, delta=False):
-        log.info("Stats.gauge(%s, %s)" % (stat, value))
+        # log.info("Stats.gauge(%s, %s)" % (stat, value))
         desc = self._descriptor(stat, value)
         self._update_gauge(desc, value)
 
