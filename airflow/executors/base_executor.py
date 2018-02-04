@@ -21,7 +21,6 @@ PARALLELISM = configuration.getint('core', 'PARALLELISM')
 
 Stats = settings.Stats
 
-
 class BaseExecutor(LoggingMixin):
 
     def __init__(self, parallelism=PARALLELISM):

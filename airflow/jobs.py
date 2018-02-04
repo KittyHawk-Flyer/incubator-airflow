@@ -1506,8 +1506,6 @@ class SchedulerJob(BaseJob):
         self.log.info(log_str)
 
     def _execute(self):
-        Stats.gauge("SchedulerJob_start", 1)
-
         self.log.info("Starting the scheduler")
         pessimistic_connection_handling()
 
