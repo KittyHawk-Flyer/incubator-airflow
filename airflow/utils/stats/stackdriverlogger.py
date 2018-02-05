@@ -39,8 +39,13 @@ class StackdriverLogger(object):
         https://bugs.python.org/issue6721
         '''
         # 1. registere descriptors
-        descs = new_descs.items()
-        for name, value_type in descs:
+        for name, value_type in new_descs.items():
+            # a "new" descriptoer might already exist in "registered" descriptor set because
+            # registered_descs and new_descs are modified in a non-atomic way (see below)
+            # filter our already-registered descriptors here.
+            if name in registered_descs:
+                continue
+
             desc = client.metric_descriptor(
                 'custom.googleapis.com/%s/%s' % (path_prefix, name),
                 metric_kind=MetricKind.GAUGE,
@@ -50,7 +55,7 @@ class StackdriverLogger(object):
             desc.create()
 
             # Because the two operations below are not atomic. this may registere the same descriptor twice.
-            # This is fine as long as the descriptor's parameters are the same
+            # This is fine as we filter out dupes before creating descriptors. (see above)
             registered_descs[name] = desc
             del new_descs[name]
 
