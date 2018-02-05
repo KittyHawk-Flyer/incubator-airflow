@@ -3,6 +3,10 @@ from threading import Thread
 import time
 
 from google.cloud.monitoring import MetricKind, ValueType
+from google.cloud.monitoring.label import LabelDescriptor
+
+from airflow.utils import process_type
+
 
 class StackdriverLogger(object):
     def __init__(self, client, path_prefix, start_publishing=True):
@@ -38,7 +42,8 @@ class StackdriverLogger(object):
         Do NOT use logging in this function as it would highly likely trigger a deadlock.
         https://bugs.python.org/issue6721
         '''
-        # 1. registere descriptors
+        # 1. register descriptors
+        label = LabelDescriptor("process_type")
         for name, value_type in new_descs.items():
             # a "new" descriptoer might already exist in "registered" descriptor set because
             # registered_descs and new_descs are modified in a non-atomic way (see below)
@@ -50,6 +55,7 @@ class StackdriverLogger(object):
                 'custom.googleapis.com/%s/%s' % (path_prefix, name),
                 metric_kind=MetricKind.GAUGE,
                 value_type=value_type,
+                labels=[label],
             )
 
             desc.create()
@@ -67,7 +73,9 @@ class StackdriverLogger(object):
         for k, v in counters.items():
             desc = registered_descs.get(k)
             if desc:
-                metric = client.metric(type_=desc.type, labels={})
+                metric = client.metric(type_=desc.type, labels={
+                    'process_type': process_type(),
+                })
                 ts.append(client.time_series(metric, resource, v, end_time=now))
 
         if len(ts) > 0:
