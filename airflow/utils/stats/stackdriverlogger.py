@@ -12,6 +12,8 @@ from airflow.utils import process_type
 
 class StackdriverLogger(object):
     def __init__(self, client, path_prefix, start_publishing=True):
+        print("StackdriverLogger created")
+
         self.new_descs = {}
         self.registered_descs = {}
         self.counters = {}
@@ -44,6 +46,7 @@ class StackdriverLogger(object):
         Do NOT use logging in this function as it would highly likely trigger a deadlock.
         https://bugs.python.org/issue6721
         '''
+        print("Publishing metrics...")
         # 1. register descriptors
         label = LabelDescriptor("process_type")
         for name, value_type in new_descs.items():
