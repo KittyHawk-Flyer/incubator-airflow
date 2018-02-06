@@ -47,8 +47,9 @@ def process_type():
     if len(sys.argv) <= 1:
         # probably in unit test
         return 'unknown'
+
     if sys.argv[1] in ['webserver', 'scheduler']:
         return sys.argv[1]
-    else:
-        log.warning("Unknown process type: %s" % sys.argv[1])
-        return 'unknown'
+
+    warnings.warn("Unknown process type: %s" % sys.argv[1])
+    return 'unknown'
