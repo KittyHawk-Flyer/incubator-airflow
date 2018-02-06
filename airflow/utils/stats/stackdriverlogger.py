@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from datetime import datetime, timedelta
 from threading import Thread
 import time
@@ -58,6 +60,8 @@ class StackdriverLogger(object):
                 labels=[label],
             )
 
+            print("registering MetricDescriptor %s" % desc)
+
             desc.create()
 
             # Because the two operations below are not atomic. this may registere the same descriptor twice.
@@ -79,6 +83,7 @@ class StackdriverLogger(object):
                 ts.append(client.time_series(metric, resource, v, end_time=now))
 
         if len(ts) > 0:
+            print("writing stats %s" % ts)
             client.write_time_series(ts)
 
     def _value_type(self, value):
@@ -113,7 +118,7 @@ class StackdriverLogger(object):
             self.counters[desc] += value
 
     def gauge(self, stat, value, rate=1, delta=False):
-        # log.info("Stats.gauge(%s, %s)" % (stat, value))
+        print("Stats.gauge(%s, %s)" % (stat, value))
         desc = self._descriptor(stat, value)
         self._update_gauge(desc, value)
 
