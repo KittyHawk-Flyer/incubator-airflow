@@ -101,9 +101,9 @@ class BaseExecutor(LoggingMixin):
         else:
             open_slots = self.parallelism - len(self.running)
 
-        self.log.debug("%s running task instances", len(self.running))
-        self.log.debug("%s in queue", len(self.queued_tasks))
-        self.log.debug("%s open slots", open_slots)
+        self.log.info("%s running task instances", len(self.running))
+        self.log.info("%s in queue", len(self.queued_tasks))
+        self.log.info("%s open slots", open_slots)
 
         Stats.gauge('running_task_instances', len(self.running))
         Stats.gauge('queued_tasks', len(self.queued_tasks))
