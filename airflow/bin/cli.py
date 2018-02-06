@@ -824,6 +824,7 @@ def scheduler(args):
         signal.signal(signal.SIGINT, sigint_handler)
         signal.signal(signal.SIGTERM, sigint_handler)
         signal.signal(signal.SIGQUIT, sigquit_handler)
+        settings.Stats.start_publishing()
         job.run()
 
 

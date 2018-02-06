@@ -14,6 +14,9 @@ class StackdriverLogger(object):
     def __init__(self, client, path_prefix):
         print("StackdriverLogger created")
 
+        self.client = client
+        self.path_prefix = path_prefix
+
         self.new_descs = {}
         self.registered_descs = {}
         self.counters = {}
@@ -24,7 +27,7 @@ class StackdriverLogger(object):
             None,
             StackdriverLogger._publish,
             'StackdriverLogger-publisher',
-            (client, path_prefix, self.new_descs, self.registered_descs, self.counters)
+            (self.client, self.path_prefix, self.new_descs, self.registered_descs, self.counters)
         )
         self.publisher.daemon = True
         self.publisher.start()
