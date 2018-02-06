@@ -184,6 +184,7 @@ class BaseJob(Base, LoggingMixin):
         self.log.debug('[heart] Boom.')
 
     def run(self):
+        Stats.start_publishing()
         Stats.incr(self.__class__.__name__.lower() + '_start', 1, 1)
         # Adding an entry in the DB
         session = settings.Session()

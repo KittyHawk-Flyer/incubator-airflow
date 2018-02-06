@@ -12,7 +12,7 @@ class TestStackdriverLogger(unittest.TestCase):
     def test_StackdriverLogger(self, mock_client):
         prefix = 'pre'
 
-        logger = StackdriverLogger(mock_client, prefix, start_publishing=False)
+        logger = StackdriverLogger(mock_client, prefix)
         logger.incr("ctr", 5)
         logger.decr("ctr", 2)
         logger.gauge("gauge", 4.2)

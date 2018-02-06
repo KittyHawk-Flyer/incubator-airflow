@@ -44,6 +44,9 @@ def process_type():
     """
     Return a name of this process: webserver, scheduler, or unknown
     """
+    if len(sys.argv) <= 1:
+        # probably in unit test
+        return 'unknown'
     if sys.argv[1] in ['webserver', 'scheduler']:
         return sys.argv[1]
     else:
