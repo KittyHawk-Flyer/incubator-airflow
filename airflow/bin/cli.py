@@ -815,6 +815,7 @@ def scheduler(args):
             stderr=stderr,
         )
         with ctx:
+            settings.Stats.start_publishing()
             job.run()
 
         stdout.close()

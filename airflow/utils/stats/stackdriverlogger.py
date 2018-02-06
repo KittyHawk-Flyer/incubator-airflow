@@ -11,13 +11,15 @@ from airflow.utils import process_type
 
 
 class StackdriverLogger(object):
-    def __init__(self, client, path_prefix, start_publishing=True):
+    def __init__(self, client, path_prefix):
         print("StackdriverLogger created")
 
         self.new_descs = {}
         self.registered_descs = {}
         self.counters = {}
 
+    def start_publishing(self):
+        print("Start publishing")
         self.publisher = Thread(
             None,
             StackdriverLogger._publish,
@@ -25,9 +27,7 @@ class StackdriverLogger(object):
             (client, path_prefix, self.new_descs, self.registered_descs, self.counters)
         )
         self.publisher.daemon = True
-
-        if start_publishing:
-            self.publisher.start()
+        self.publisher.start()
 
     @staticmethod
     def _publish(client, path_prefix, new_descs, registered_descs, counters):
