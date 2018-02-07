@@ -1,9 +1,12 @@
 from __future__ import print_function
 
 from datetime import datetime, timedelta
+import logging
 from threading import Thread
 import time
+import warnings
 
+from google.cloud.exceptions import BadRequest
 from google.cloud.monitoring import MetricKind, ValueType
 from google.cloud.monitoring.label import LabelDescriptor
 
@@ -12,8 +15,6 @@ from airflow.utils import process_type
 
 class StackdriverLogger(object):
     def __init__(self, client, path_prefix):
-        print("StackdriverLogger created")
-
         self.client = client
         self.path_prefix = path_prefix
 
@@ -22,7 +23,6 @@ class StackdriverLogger(object):
         self.counters = {}
 
     def start_publishing(self):
-        print("Start publishing")
         self.publisher = Thread(
             None,
             StackdriverLogger._publish,
@@ -34,22 +34,33 @@ class StackdriverLogger(object):
 
     @staticmethod
     def _publish(client, path_prefix, new_descs, registered_descs, counters):
-        '''
-        Do NOT use logging in this function as it would highly likely trigger a deadlock.
-        https://bugs.python.org/issue6721
-        '''
+        cls = StackdriverLogger.__class__
+        log = logging.root.getChild("airflow.Stackdriverlogger")
+
         while True:
             next_wakeup = datetime.utcnow() + timedelta(minutes=1)
-            StackdriverLogger._do_publish(client, path_prefix, new_descs, registered_descs, counters)
+            try:
+                StackdriverLogger._do_publish(
+                    client,
+                    path_prefix,
+                    new_descs,
+                    registered_descs,
+                    counters,
+                    log)
+            except BadRequest as e:
+                log.error("Publishing failed", exc_info=e)
+
             time.sleep(max(0, (next_wakeup - datetime.utcnow()).total_seconds()))
 
     @staticmethod
-    def _do_publish(client, path_prefix, new_descs, registered_descs, counters):
-        '''
-        Do NOT use logging in this function as it would highly likely trigger a deadlock.
-        https://bugs.python.org/issue6721
-        '''
-        print("Publishing metrics...")
+    def _do_publish(
+            client,
+            path_prefix,
+            new_descs,
+            registered_descs,
+            counters,
+            log):
+        log.info("Publishing metrics...")
         # 1. register descriptors
         label = LabelDescriptor("process_type")
         for name, value_type in new_descs.items():
@@ -66,8 +77,7 @@ class StackdriverLogger(object):
                 labels=[label],
             )
 
-            print("registering MetricDescriptor %s" % desc)
-
+            log.info("registering MetricDescriptor %s" % desc)
             desc.create()
 
             # Because the two operations below are not atomic. this may registere the same descriptor twice.
@@ -89,7 +99,7 @@ class StackdriverLogger(object):
                 ts.append(client.time_series(metric, resource, v, end_time=now))
 
         if len(ts) > 0:
-            print("writing stats %s" % ts)
+            log.info("writing stats: " % [t.metric.type for t in ts])
             client.write_time_series(ts)
 
     def _value_type(self, value):
@@ -124,7 +134,6 @@ class StackdriverLogger(object):
             self.counters[desc] += value
 
     def gauge(self, stat, value, rate=1, delta=False):
-        print("Stats.gauge(%s, %s)" % (stat, value))
         desc = self._descriptor(stat, value)
         self._update_gauge(desc, value)
 

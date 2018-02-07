@@ -21,8 +21,6 @@ from airflow.exceptions import AirflowConfigException
 from airflow.utils import process_type
 from airflow.utils.module_loading import import_string
 
-log = logging.getLogger(__name__)
-
 
 class DummyStatsLogger(object):
     @classmethod
@@ -65,7 +63,7 @@ def configure_stats():
 
     elif stats_backend == 'stackdriver':
         # StackdriverLogger doesn't support multiprocess model like gunicorn
-        if process_type() == 'webserver':
+        if process_type() != 'scheduler':
             return DummyStatsLogger
 
         from google.cloud import monitoring
