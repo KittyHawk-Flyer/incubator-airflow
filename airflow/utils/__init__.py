@@ -21,9 +21,6 @@ import logging
 from .decorators import apply_defaults as _apply_defaults
 
 
-log = logging.getLogger(__name__)
-
-
 def apply_defaults(func):
     warnings.warn_explicit(
         """
