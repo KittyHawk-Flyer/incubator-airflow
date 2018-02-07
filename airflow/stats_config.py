@@ -51,10 +51,18 @@ def configure_stats():
     if stats_backend == 'statsd' or conf.getboolean('scheduler', 'statsd_on'):
         from statsd import StatsClient
 
-        return StatsClient(
+        class StatsClientAdaptor(StatsClient):
+            def __init__(self, host, port, prefix):
+                super(StatsClientAdaptor, self).__init__(host, port, prefix)
+
+            def start_publishing(self):
+                pass
+
+        return StatsClientAdaptor(
             host=conf.get('scheduler', 'statsd_host'),
             port=conf.getint('scheduler', 'statsd_port'),
             prefix=conf.get('scheduler', 'statsd_prefix'))
+
     elif stats_backend == 'stackdriver':
         # StackdriverLogger doesn't support multiprocess model like gunicorn
         if process_type() == 'webserver':
@@ -66,5 +74,6 @@ def configure_stats():
         client = monitoring.Client(conf.get('scheduler', 'stackdriver_project'))
         path_prefix = conf.get('scheduler', 'stackdriver_prefix')
         return StackdriverLogger(client, path_prefix)
+
     else:
         return DummyStatsLogger

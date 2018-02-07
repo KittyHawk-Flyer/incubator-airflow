@@ -1484,8 +1484,6 @@ class SchedulerJob(BaseJob):
         # Sort by longest last runtime. (Can't sort None values in python3)
         rows = sorted(rows, key=lambda x: x[3] or 0.0)
 
-        Stats.gauge("num_dags", len(rows))
-
         formatted_rows = []
         for file_path, pid, runtime, last_runtime, last_run in rows:
             formatted_rows.append((file_path,
