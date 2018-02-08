@@ -35,7 +35,7 @@ class StackdriverLogger(object):
     @staticmethod
     def _publish(client, path_prefix, new_descs, registered_descs, counters):
         cls = StackdriverLogger.__class__
-        log = logging.root.getChild("airflow.Stackdriverlogger")
+        log = logging.root.getChild("airflow.StackdriverLogger")
 
         while True:
             next_wakeup = datetime.utcnow() + timedelta(minutes=1)
@@ -77,7 +77,7 @@ class StackdriverLogger(object):
                 labels=[label],
             )
 
-            log.info("registering MetricDescriptor %s" % desc)
+            log.info("registering MetricDescriptor %s with type %s" % (desc.type, desc.value_type))
             desc.create()
 
             # Because the two operations below are not atomic. this may registere the same descriptor twice.
