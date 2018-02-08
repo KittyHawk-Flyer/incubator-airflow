@@ -48,7 +48,7 @@ class StackdriverLogger(object):
                     counters,
                     log)
             except BadRequest as e:
-                log.error("Publishing failed", exc_info=e)
+                log.error("Failed to publish metrics", exc_info=e)
 
             time.sleep(max(0, (next_wakeup - datetime.utcnow()).total_seconds()))
 
@@ -60,7 +60,7 @@ class StackdriverLogger(object):
             registered_descs,
             counters,
             log):
-        log.info("Publishing metrics...")
+        log.info("Publishing...")
         # 1. register descriptors
         label = LabelDescriptor("process_type")
         for name, value_type in new_descs.items():
@@ -99,7 +99,7 @@ class StackdriverLogger(object):
                 ts.append(client.time_series(metric, resource, v, end_time=now))
 
         if len(ts) > 0:
-            log.info("writing stats: " % [t.metric.type for t in ts])
+            log.info("writing time series: %s" % [t.metric.type for t in ts])
             client.write_time_series(ts)
 
     def _value_type(self, value):
