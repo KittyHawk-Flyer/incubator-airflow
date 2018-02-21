@@ -24,10 +24,6 @@ from airflow.utils.module_loading import import_string
 
 class DummyStatsLogger(object):
     @classmethod
-    def start_publishing(cls):
-        pass
-
-    @classmethod
     def incr(cls, stat, count=1, rate=1):
         pass
 
@@ -49,14 +45,7 @@ def configure_stats():
     if stats_backend == 'statsd' or conf.getboolean('scheduler', 'statsd_on'):
         from statsd import StatsClient
 
-        class StatsClientAdaptor(StatsClient):
-            def __init__(self, host, port, prefix):
-                super(StatsClientAdaptor, self).__init__(host, port, prefix)
-
-            def start_publishing(self):
-                pass
-
-        return StatsClientAdaptor(
+        return StatsClient(
             host=conf.get('scheduler', 'statsd_host'),
             port=conf.getint('scheduler', 'statsd_port'),
             prefix=conf.get('scheduler', 'statsd_prefix'))

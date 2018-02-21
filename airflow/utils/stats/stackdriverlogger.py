@@ -2,7 +2,10 @@ from __future__ import print_function
 
 from datetime import datetime, timedelta
 import logging
-from threading import Thread
+from threading import (
+    Lock,
+    Thread,
+)
 import time
 import warnings
 
@@ -22,15 +25,23 @@ class StackdriverLogger(object):
         self.registered_descs = {}
         self.counters = {}
 
-    def start_publishing(self):
-        self.publisher = Thread(
-            None,
-            StackdriverLogger._publish,
-            'StackdriverLogger-publisher',
-            (self.client, self.path_prefix, self.new_descs, self.registered_descs, self.counters)
-        )
-        self.publisher.daemon = True
-        self.publisher.start()
+        self.lock = Lock()
+
+    def _start_publishing(self):
+        if not self.lock.acquire(blocking=False):
+            return
+
+        try:
+            self.publisher = Thread(
+                None,
+                StackdriverLogger._publish,
+                'StackdriverLogger-publisher',
+                (self.client, self.path_prefix, self.new_descs, self.registered_descs, self.counters)
+            )
+            self.publisher.daemon = True
+            self.publisher.start()
+        finally:
+            self.lock.release()
 
     @staticmethod
     def _publish(client, path_prefix, new_descs, registered_descs, counters):
@@ -120,10 +131,12 @@ class StackdriverLogger(object):
         return name
 
     def incr(self, stat, count=1, rate=1):
+        self._start_publishing()
         desc = self._descriptor(stat, count)
         self._update_counter(desc, count)
 
     def decr(self, stat, count=1, rate=1):
+        self._start_publishing()
         desc = self._descriptor(stat, count)
         self._update_counter(desc, -count)
 
@@ -134,6 +147,7 @@ class StackdriverLogger(object):
             self.counters[desc] += value
 
     def gauge(self, stat, value, rate=1, delta=False):
+        self._start_publishing()
         desc = self._descriptor(stat, value)
         self._update_gauge(desc, value)
 
