@@ -45,7 +45,7 @@ def process_type():
         # probably in unit test
         return 'unknown'
 
-    if sys.argv[1] in ['webserver', 'scheduler']:
+    if sys.argv[1] in ['webserver', 'scheduler', 'run']:
         return sys.argv[1]
 
     warnings.warn("Unknown process type: %s" % sys.argv[1])
