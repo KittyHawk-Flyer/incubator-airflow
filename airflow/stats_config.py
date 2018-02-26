@@ -22,6 +22,9 @@ from airflow.utils import process_type
 from airflow.utils.module_loading import import_string
 
 
+log = logging.getLogger(__name__)
+
+
 class DummyStatsLogger(object):
     @classmethod
     def incr(cls, stat, count=1, rate=1):
@@ -40,7 +43,42 @@ class DummyStatsLogger(object):
         pass
 
 
+def prepare_classpath():
+    config_path = os.path.join(conf.get('core', 'airflow_home'), 'config')
+    config_path = os.path.expanduser(config_path)
+
+    if config_path not in sys.path:
+        sys.path.append(config_path)
+
+
 def configure_stats():
+    # Prepare the classpath so we are sure that the config folder
+    # is on the python classpath and it is reachable
+    prepare_classpath()
+
+    stats_class_path = None
+    try:
+        stats_class_path = conf.get('core', 'stats_class')
+    except AirflowConfigException:
+        log.debug('Could not find key logging_config_class in config')
+
+    if stats_class_path:
+        try:
+            stats_instance = import_string(stats_class_path)
+
+            log.info(
+                'Successfully instantiated user-defined stats class from %s',
+                stats_class_path
+            )
+
+            return stats_instance
+        except Exception:
+            # Import default logging configurations.
+            raise ImportError(
+                'Unable to load custom stats from {}'.format(stats_class_path)
+            )
+
+
     stats_backend = conf.get('scheduler', 'stats_backend')
     if stats_backend == 'statsd' or conf.getboolean('scheduler', 'statsd_on'):
         from statsd import StatsClient
@@ -49,18 +87,6 @@ def configure_stats():
             host=conf.get('scheduler', 'statsd_host'),
             port=conf.getint('scheduler', 'statsd_port'),
             prefix=conf.get('scheduler', 'statsd_prefix'))
-
-    elif stats_backend == 'stackdriver':
-        # StackdriverLogger doesn't support multiprocess model like gunicorn
-        if process_type() != 'scheduler':
-            return DummyStatsLogger
-
-        from google.cloud import monitoring
-        from airflow.utils.stats.stackdriverlogger import StackdriverLogger
-
-        client = monitoring.Client(conf.get('scheduler', 'stackdriver_project'))
-        path_prefix = conf.get('scheduler', 'stackdriver_prefix')
-        return StackdriverLogger(client, path_prefix)
 
     else:
         return DummyStatsLogger
