@@ -72,12 +72,10 @@ def configure_stats():
             )
 
             return stats_instance
-        except Exception:
-            # Import default logging configurations.
-            raise ImportError(
-                'Unable to load custom stats from {}'.format(stats_class_path)
-            )
-
+        except Exception as e:
+            msg = 'Unable to load custom stats from {}'.format(stats_class_path)
+            log.error(msg, exc_info=e)
+            raise ImportError(msg)
 
     stats_backend = conf.get('scheduler', 'stats_backend')
     if stats_backend == 'statsd' or conf.getboolean('scheduler', 'statsd_on'):
