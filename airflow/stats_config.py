@@ -77,8 +77,7 @@ def configure_stats():
             log.error(msg, exc_info=e)
             raise ImportError(msg)
 
-    stats_backend = conf.get('scheduler', 'stats_backend')
-    if stats_backend == 'statsd' or conf.getboolean('scheduler', 'statsd_on'):
+    if conf.getboolean('scheduler', 'statsd_on'):
         from statsd import StatsClient
 
         return StatsClient(
