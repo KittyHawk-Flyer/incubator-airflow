@@ -110,13 +110,15 @@ class BaseExecutor(LoggingMixin):
         Stats.gauge('queued_tasks', len(self.queued_tasks))
         Stats.gauge('open_slots', open_slots)
 
-        total_running_secs = 0
         now = datetime.utcnow()
-        for key in self.running.keys():
-            if key in self.queued_tasks:
-                (_, _, _, ti) = self.queued_tasks[key]
-                total_running_secs = (now - ti.start_date).total_seconds()
+        total_running_secs = sum([
+            (now - ti.start_date).total_seconds() for (_, ti) in self.running.itervalues()
+        ])
         Stats.gauge('outstanding_tasks_running_secs', total_running_secs)
+        total_queued_secs = sum([
+            (now - ti.start_date).total_seconds() for (_, _, _, ti) in self.queued_tasks.itervalues()
+        ])
+        Stats.gauge('outstanding_tasks_queued_secs', total_queued_secs)
 
         sorted_queue = sorted(
             [(k, v) for k, v in self.queued_tasks.items()],
@@ -134,7 +136,7 @@ class BaseExecutor(LoggingMixin):
             self.queued_tasks.pop(key)
             ti.refresh_from_db()
             if ti.state != State.RUNNING:
-                self.running[key] = command
+                self.running[key] = (command, ti)
                 self.execute_async(key, command=command, queue=queue)
             else:
                 self.log.debug(
