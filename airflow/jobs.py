@@ -477,6 +477,7 @@ class DagFileProcessor(AbstractDagFileProcessor, LoggingMixin):
             if elapsed_seconds > self._timeout_seconds:
                 if not self._result_queue.empty():
                     self._result = self._result_queue.get_nowait()
+                self.log.debug("Process ({}) timedout. Killing".format(self._process))
                 self.terminate(sigkill=True)
                 self._process.join()
                 return True
