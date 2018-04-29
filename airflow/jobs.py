@@ -287,7 +287,7 @@ class DagFileProcessor(AbstractDagFileProcessor, LoggingMixin):
     # Counter that increments everytime an instance of this class is created
     class_creation_counter = 0
 
-    def __init__(self, file_path, pickle_dags, dag_id_white_list):
+    def __init__(self, file_path, pickle_dags, dag_id_white_list, timeout_seconds=None):
         """
         :param file_path: a Python file containing Airflow DAG definitions
         :type file_path: unicode
@@ -295,6 +295,8 @@ class DagFileProcessor(AbstractDagFileProcessor, LoggingMixin):
         :type pickle_dags: bool
         :param dag_id_whitelist: If specified, only look at these DAG ID's
         :type dag_id_whitelist: list[unicode]
+        :param timeout_seconds: If specified, apply timeout for the dag processing.
+        :type timeout_seconds: int
         """
         self._file_path = file_path
         # Queue that's used to pass results from the child process.
@@ -302,6 +304,7 @@ class DagFileProcessor(AbstractDagFileProcessor, LoggingMixin):
         # The process that was launched to process the given .
         self._process = None
         self._dag_id_white_list = dag_id_white_list
+        self._timeout_seconds = timeout_seconds
         self._pickle_dags = pickle_dags
         # The result of Scheduler.process_file(file_path).
         self._result = None
@@ -469,6 +472,15 @@ class DagFileProcessor(AbstractDagFileProcessor, LoggingMixin):
             self._process.join()
             return True
 
+        if self._timeout_seconds:
+            elapsed_seconds = (datetime.utcnow() - self._start_time).total_seconds()
+            if elapsed_seconds > self._timeout_seconds:
+                if not self._result_queue.empty():
+                    self._result = self._result_queue.get_nowait()
+                self.terminate(sigkill=True)
+                self._process.join()
+                return True
+
         return False
 
     @property
@@ -517,6 +529,9 @@ class SchedulerJob(BaseJob):
             run_duration=None,
             do_pickle=False,
             log=None,
+            dag_file_processing_timeout_seconds=conf.getint(
+                'scheduler',
+                'dag_file_processing_timeout_seconds'),
             *args, **kwargs):
         """
         :param dag_id: if specified, only schedule tasks with this DAG ID
@@ -1532,7 +1547,8 @@ class SchedulerJob(BaseJob):
         def processor_factory(file_path):
             return DagFileProcessor(file_path,
                                     pickle_dags,
-                                    self.dag_ids)
+                                    self.dag_ids,
+                                    self.dag_file_processing_timeout_seconds)
 
         processor_manager = DagFileProcessorManager(self.subdir,
                                                     known_file_paths,
