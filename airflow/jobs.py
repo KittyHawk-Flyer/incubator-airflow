@@ -559,6 +559,7 @@ class SchedulerJob(BaseJob):
             self.dag_ids.extend(dag_ids)
 
         self.subdir = subdir
+        self.dag_file_processing_timeout_seconds = dag_file_processing_timeout_seconds
 
         self.num_runs = num_runs
         self.run_duration = run_duration
