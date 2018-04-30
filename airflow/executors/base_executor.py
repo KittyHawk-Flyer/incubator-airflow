@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from builtins import range
+from datetime import datetime
 
-from airflow import configuration
+from airflow import configuration, settings
 from airflow.utils.log.logging_mixin import LoggingMixin
 from airflow.utils.state import State
 
 PARALLELISM = configuration.getint('core', 'PARALLELISM')
 
+Stats = settings.Stats
 
 class BaseExecutor(LoggingMixin):
 
@@ -103,6 +105,18 @@ class BaseExecutor(LoggingMixin):
         self.log.debug("%s running task instances", len(self.running))
         self.log.debug("%s in queue", len(self.queued_tasks))
         self.log.debug("%s open slots", open_slots)
+
+        Stats.gauge('running_task_instances', len(self.running))
+        Stats.gauge('queued_tasks', len(self.queued_tasks))
+        Stats.gauge('open_slots', open_slots)
+
+        total_running_secs = 0
+        now = datetime.utcnow()
+        for key in self.running.keys():
+            if key in self.queued_tasks:
+                (_, _, _, ti) = self.queued_tasks[key]
+                total_running_secs = (now - ti.start_date).total_seconds()
+        Stats.gauge('outstanding_tasks_running_secs', total_running_secs)
 
         sorted_queue = sorted(
             [(k, v) for k, v in self.queued_tasks.items()],

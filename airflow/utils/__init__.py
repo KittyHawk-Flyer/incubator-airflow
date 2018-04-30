@@ -14,7 +14,9 @@
 #
 from __future__ import absolute_import
 
+import sys
 import warnings
+import logging
 
 from .decorators import apply_defaults as _apply_defaults
 
@@ -33,3 +35,18 @@ def apply_defaults(func):
         lineno=func.__code__.co_firstlineno + 1
     )
     return _apply_defaults(func)
+
+
+def process_type():
+    """
+    Return a name of this process: webserver, scheduler, or unknown
+    """
+    if len(sys.argv) <= 1:
+        # probably in unit test
+        return 'unknown'
+
+    if sys.argv[1] in ['webserver', 'scheduler']:
+        return sys.argv[1]
+
+    warnings.warn("Unknown process type: %s" % sys.argv[1])
+    return 'unknown'
