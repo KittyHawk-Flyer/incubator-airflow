@@ -910,8 +910,6 @@ class SchedulerJob(BaseJob):
 
         # update the state of the previously active dag runs
         dag_runs = DagRun.find(dag_id=dag.dag_id, state=State.RUNNING, session=session)
-        if self.policy_lifo:
-            dag_runs = sorted(dag_runs, key=lambda dr: dr.execution_date, reverse=True)
 
         active_dag_runs = []
         for run in dag_runs:
@@ -952,9 +950,6 @@ class SchedulerJob(BaseJob):
             # update_state above which has already checked these tasks
             for ti in tis:
                 task = dag.get_task(ti.task_id)
-
-                if task.depends_on_past and self.policy_lifo:
-                    raise AirflowException("scheduler.policy_lifo cannot be True with tasks of depends_on_past=True")
 
                 # fixme: ti.task is transient but needs to be set
                 ti.task = task
@@ -1136,8 +1131,13 @@ class SchedulerJob(BaseJob):
                 )
             )
 
-            priority_sorted_task_instances = sorted(
-                task_instances, key=lambda ti: (-ti.priority_weight, ti.execution_date))
+            if self.policy_lifo:
+                # simply sort by execution_date with priority_weight ignored
+                priority_sorted_task_instances = sorted(
+                    task_instances, key=lambda ti: ti.execution_date, reverse=True)
+            else:
+                priority_sorted_task_instances = sorted(
+                    task_instances, key=lambda ti: (-ti.priority_weight, ti.execution_date))
 
             # DAG IDs with running tasks that equal the concurrency limit of the dag
             dag_id_to_possibly_running_task_count = {}
