@@ -910,7 +910,7 @@ class SchedulerJob(BaseJob):
 
         # update the state of the previously active dag runs
         dag_runs = DagRun.find(dag_id=dag.dag_id, state=State.RUNNING, session=session)
-       if self.policy_lifo:
+        if self.policy_lifo:
             dag_runs = sorted(dag_runs, key=lambda dr: dr.execution_date, reverse=True)
 
         active_dag_runs = []
