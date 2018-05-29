@@ -1136,8 +1136,13 @@ class SchedulerJob(BaseJob):
                 )
             )
 
-            priority_sorted_task_instances = sorted(
-                task_instances, key=lambda ti: (-ti.priority_weight, ti.execution_date))
+            if self.policy_lifo:
+                # simply sort by execution_date with priority_weight ignored
+                priority_sorted_task_instances = sorted(
+                    task_instances, key=lambda ti: ti.execution_date, reverse=True)
+            else:
+                priority_sorted_task_instances = sorted(
+                    task_instances, key=lambda ti: (-ti.priority_weight, ti.execution_date))
 
             # DAG IDs with running tasks that equal the concurrency limit of the dag
             dag_id_to_possibly_running_task_count = {}
