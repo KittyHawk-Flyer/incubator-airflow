@@ -89,7 +89,7 @@ class _DataflowJob(LoggingMixin):
 
 class _Dataflow(LoggingMixin):
     def __init__(self, cmd):
-        self.log.info("Starting Dataflow job: %s" % cmd)
+        self.log.info("Starting Dataflow job: %s" % ' '.join(cmd))
         self._proc = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                                       stderr=subprocess.PIPE)
 
