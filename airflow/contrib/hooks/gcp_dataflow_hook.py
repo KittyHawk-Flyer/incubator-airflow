@@ -89,6 +89,7 @@ class _DataflowJob(LoggingMixin):
 
 class _Dataflow(LoggingMixin):
     def __init__(self, cmd):
+        self.log.info("Starting Dataflow job: %s" % ' '.join(cmd))
         self._proc = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                                       stderr=subprocess.PIPE)
 
@@ -114,10 +115,12 @@ class _Dataflow(LoggingMixin):
             if ret is not None:
                 for fd in ret[0]:
                     line = self._line(fd)
-                    self.log.debug(line[:-1])
+                    self.log.info(line[:-1])
             else:
                 self.log.info("Waiting for DataFlow process to complete.")
-        if self._proc.returncode is not 0:
+        if self._proc.returncode is 0:
+            self.log.info("Dataflow process has started.")
+        else:
             raise Exception("DataFlow failed with return code {}".format(
                 self._proc.returncode))
 
