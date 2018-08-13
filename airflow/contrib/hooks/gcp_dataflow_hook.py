@@ -146,13 +146,13 @@ class DataFlowHook(GoogleCloudBaseHook):
             self.get_conn(), variables['project'], name).wait_for_done()
 
     def start_java_dataflow(self, task_id, variables, dataflow):
-        name = task_id + "-" + str(uuid.uuid1())[:8]
+        name = task_id + "-" + str(uuid.uuid4())[:8]
         variables['jobName'] = name
         self._start_dataflow(
             task_id, variables, dataflow, name, ["java", "-jar"])
 
     def start_python_dataflow(self, task_id, variables, dataflow, py_options):
-        name = task_id + "-" + str(uuid.uuid1())[:8]
+        name = task_id + "-" + str(uuid.uuid4())[:8]
         variables["job_name"] = name
         self._start_dataflow(
             task_id, variables, dataflow, name, ["python"] + py_options)
